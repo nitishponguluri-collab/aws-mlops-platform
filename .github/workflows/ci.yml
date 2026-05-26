@@ -1,0 +1,70 @@
+name: Terraform Validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    name: Validate all modules
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.0"
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive -diff
+        continue-on-error: true
+
+      - name: Validate sagemaker-pipeline module
+        working-directory: modules/sagemaker-pipeline
+        run: |
+          terraform init -backend=false -input=false
+          terraform validate
+
+      - name: Validate mlflow-tracking module
+        working-directory: modules/mlflow-tracking
+        run: |
+          terraform init -backend=false -input=false
+          terraform validate
+
+      - name: Validate bedrock-gateway module
+        working-directory: modules/bedrock-gateway
+        run: |
+          terraform init -backend=false -input=false
+          terraform validate
+
+      - name: Validate model-serving-eks module
+        working-directory: modules/model-serving-eks
+        run: |
+          terraform init -backend=false -input=false
+          terraform validate
+
+  tflint:
+    name: tflint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup tflint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: latest
+
+      - name: Run tflint on all modules
+        run: |
+          for dir in modules/*/; do
+            echo "--- Linting $dir ---"
+            cd "$dir"
+            tflint --init || true
+            tflint --minimum-failure-severity=error || true
+            cd -
+          done
