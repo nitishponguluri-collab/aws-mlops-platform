@@ -93,7 +93,7 @@ resource "aws_cloudwatch_metric_alarm" "p99_latency" {
   metric_name         = "p99_inference_latency_ms"
   namespace           = "MLPlatform/${var.name}"
   period              = 60
-  statistic           = "p99"
+  extended_statistic  = "p99"
   threshold           = var.p99_latency_threshold_ms
   alarm_description   = "Model server p99 latency exceeded ${var.p99_latency_threshold_ms}ms"
   treat_missing_data  = "notBreaching"
